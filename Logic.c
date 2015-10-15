@@ -2,19 +2,27 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <string.h>
-
+#include "SDL2/SDL.h"
+#define NUMBER 1024*1024*200
 #define isSymbol(str) (str == '^' || str == '*' || str == '-' || str == '=')
 #define isAlphabet(str) ((str >= 'A' && str <= 'Z') || (str >= 'a' && str <= 'z'))
 #define isSpecSymbol(str1,str2) (str1 == '-' && str2 == '>')
 #define isEqualSymbol(str1,str2,str3) (str1 == '<' && str2 == '-' && str3 == '>')
-
-static _inline int mythReplace(char* str, int len,int left, int right){
-	str[left] = 'p';
-	memcpy(str + left + 1, str + right + 1, len - right + 1);
-	return len - right + left + 1;
+//int sum;
+static inline char* mythReplace(char* str, int len,int left, int right){
+    //int t;
+    if(left > (len>>1)){
+        str[left] = 'p';
+        memcpy(str + left + 1, str + right + 1, len - right + 1);
+        return str;
+    }else{
+        str[right] = 'p';
+        memcpy(str + right - left,str,left);
+        return &str[right - left];
+    }
 }
 
-static _inline int isAtom(char* str, int left, int right){
+static inline int isAtom(char* str, int left, int right){
 	switch (right - left - 1){
 	case 5:
 		return isAlphabet(str[left + 1]) && isEqualSymbol(str[left + 2], str[left + 3], str[left + 4]) && isAlphabet(str[right - 1]);	//p<->q 
@@ -30,8 +38,9 @@ static _inline int isAtom(char* str, int left, int right){
 }
 
 int isLogic(char* str,int len){
+    //printf("start IsLogic:%s,%d\n",str,len);
 	int  i = 0, tmpright = -1, tmpleft = -1;
-	char* p = str;
+    char* p = str,*q = NULL;
 	if (*(p+1) == 0 && isAlphabet(*p))
 		return 1;
 	do{
@@ -52,22 +61,38 @@ int isLogic(char* str,int len){
 		return 0;
 	}
 	else{
-		i = mythReplace(str, len,tmpleft, tmpright);
-		return isLogic(str,i);
+		q = mythReplace(str, len,tmpleft, tmpright);
+		return isLogic(q,len - tmpright + tmpleft);
 	}
 }
 
 int main(int argc, char**argv){
-	char str[256];
-	for (;;){
-		memset(str, 0, 256);
-		printf(">"); gets(str);
-		if (strcmp(str,"quit") == 0)
-			break;
+    SDL_Init(NULL);
+    char *str = (char*)malloc(NUMBER);
+	const char* filename = NULL;
+    int t;
+	FILE* file;
+	int len;
+    //sum = 0;
+    //puts(mythReplace(str,7,1,3));
+	if(argc > 1){
+        memset(str,0,NUMBER);
+		file = fopen(argv[1],"r");
+        if(!file)
+            return 1;
+		fread(str,NUMBER,1,file);
+		len = strlen(str);
+		if(str[len - 1] == 10)
+			str[len - 1] = 0;
+        t = SDL_GetTicks();
 		if (isLogic(str,strlen(str)))
 			printf("True,Is a Logic Expression\n");
 		else
 			printf("False,Not a Logic Expression\n");
+        printf("%dms\n",SDL_GetTicks() - t);
+        //printf("memcpy:%dms\n",sum);
+        free(str);
+		fclose(file);
 	}
 	return 0;
 }
