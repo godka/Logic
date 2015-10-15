@@ -2,15 +2,15 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <string.h>
-#include "SDL2/SDL.h"
 #define NUMBER 1024*1024*200
 #define isSymbol(str) (str == '^' || str == '*' || str == '-' || str == '=')
 #define isAlphabet(str) ((str >= 'A' && str <= 'Z') || (str >= 'a' && str <= 'z'))
 #define isSpecSymbol(str1,str2) (str1 == '-' && str2 == '>')
 #define isEqualSymbol(str1,str2,str3) (str1 == '<' && str2 == '-' && str3 == '>')
-//int sum;
+#ifdef WIN32
+	#define inline _inline
+#endif
 static inline char* mythReplace(char* str, int len,int left, int right){
-    //int t;
     if(left > (len>>1)){
         str[left] = 'p';
         memcpy(str + left + 1, str + right + 1, len - right + 1);
@@ -38,7 +38,6 @@ static inline int isAtom(char* str, int left, int right){
 }
 
 int isLogic(char* str,int len){
-    //printf("start IsLogic:%s,%d\n",str,len);
 	int  i = 0, tmpright = -1, tmpleft = -1;
     char* p = str,*q = NULL;
 	if (*(p+1) == 0 && isAlphabet(*p))
@@ -67,14 +66,10 @@ int isLogic(char* str,int len){
 }
 
 int main(int argc, char**argv){
-    SDL_Init(NULL);
     char *str = (char*)malloc(NUMBER);
 	const char* filename = NULL;
-    int t;
 	FILE* file;
 	int len;
-    //sum = 0;
-    //puts(mythReplace(str,7,1,3));
 	if(argc > 1){
         memset(str,0,NUMBER);
 		file = fopen(argv[1],"r");
@@ -84,13 +79,10 @@ int main(int argc, char**argv){
 		len = strlen(str);
 		if(str[len - 1] == 10)
 			str[len - 1] = 0;
-        t = SDL_GetTicks();
-		if (isLogic(str,strlen(str)))
+		if (isLogic(str, len))
 			printf("True,Is a Logic Expression\n");
 		else
 			printf("False,Not a Logic Expression\n");
-        printf("%dms\n",SDL_GetTicks() - t);
-        //printf("memcpy:%dms\n",sum);
         free(str);
 		fclose(file);
 	}
